@@ -18,18 +18,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 🐧 Linux setup
       - name: Setup build environment (Linux)
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y build-essential
 
+      # 🪟 Windows setup
       - name: Setup build environment (Windows)
         if: runner.os == 'Windows'
+        shell: powershell
         run: |
-          choco install make
-          choco install mingw
-          echo "PATH=C:\\ProgramData\\chocolatey\\lib\\mingw\\tools\\install\\mingw64\\bin;%PATH%" >> $env:GITHUB_ENV
+          choco install make -y
+          choco install mingw -y
+          echo "PATH=C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin;$env:PATH" >> $env:GITHUB_ENV
 
+      # 🧱 Build
       - name: Build project
+        shell: bash
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
             mingw32-make
@@ -37,10 +42,12 @@ jobs:
             make
           fi
 
+      # 🧪 Run tests
       - name: Run tests
+        shell: bash
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
-            test\\run.exe
+            ./test/run.exe
           else
             ./test/run
           fi
