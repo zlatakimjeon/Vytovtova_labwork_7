@@ -26,7 +26,7 @@ else
     RUN = ./$(TEST)
 endif
 
-all: $(LIB) $(TEST)
+all: clean $(LIB) $(TEST)
 
 $(OBJ_DIR):
 	$(call MKDIR,$(OBJ_DIR))
@@ -34,13 +34,12 @@ $(OBJ_DIR):
 $(LIB_DIR):
 	$(call MKDIR,$(LIB_DIR))
 
-# 🔧 Пересобираем библиотеку всегда, чтобы формат совпадал с ОС
-$(LIB): $(OBJ_DIR) $(LIB_DIR) $(OBJS)
+$(OBJ_DIR)/graph.o: $(SRC_DIR)/graph.c include/graph.h | $(OBJ_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(LIB): $(OBJS) | $(LIB_DIR)
 	$(DEL) $(LIB)
 	$(AR) $(ARFLAGS) $@ $(OBJS)
-
-$(OBJ_DIR)/graph.o: $(SRC_DIR)/graph.c include/graph.h
-	$(CC) $(CFLAGS) -c $< -o $@
 
 $(TEST): $(LIB) $(TEST_DIR)/test.c
 	$(CC) $(CFLAGS) -L$(LIB_DIR) $(TEST_DIR)/test.c -lgraph -o $@$(EXE)
