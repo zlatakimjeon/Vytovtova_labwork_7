@@ -13,11 +13,17 @@ OBJS = $(OBJ_DIR)/graph.o
 TEST = $(TEST_DIR)/run
 
 ifeq ($(OS),Windows_NT)
+    EXE = .exe
     MKDIR = if not exist $(subst /,\\,$(1)) mkdir $(subst /,\\,$(1))
     RM = rmdir /s /q $(subst /,\\,$(1))
+    DEL = del /q $(subst /,\\,$(1))
+    RUN = $(TEST)$(EXE)
 else
+    EXE =
     MKDIR = mkdir -p $(1)
     RM = rm -rf $(1)
+    DEL = rm -f $(1)
+    RUN = ./$(TEST)
 endif
 
 all: $(LIB) $(TEST)
@@ -29,20 +35,21 @@ $(LIB_DIR):
 	$(call MKDIR,$(LIB_DIR))
 
 $(LIB): $(OBJ_DIR) $(LIB_DIR) $(OBJS)
+	$(DEL) $(LIB)
 	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 $(OBJ_DIR)/graph.o: $(SRC_DIR)/graph.c include/graph.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(TEST): $(LIB) $(TEST_DIR)/test.c
-	$(CC) $(CFLAGS) -L$(LIB_DIR) $(TEST_DIR)/test.c -lgraph -o $@
+	$(CC) $(CFLAGS) -L$(LIB_DIR) $(TEST_DIR)/test.c -lgraph -o $@$(EXE)
 
 run: $(TEST)
-	./$(TEST)
+	$(RUN)
 
 clean:
 	-$(call RM,$(OBJ_DIR))
 	-$(call RM,$(LIB_DIR))
-	-del $(subst /,\\,$(TEST))
+	-$(DEL) $(TEST)$(EXE)
 
 .PHONY: all clean run
