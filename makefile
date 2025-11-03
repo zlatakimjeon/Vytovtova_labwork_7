@@ -14,9 +14,9 @@ TEST = $(TEST_DIR)/run
 
 ifeq ($(OS),Windows_NT)
     EXE = .exe
-    MKDIR = if not exist $(subst /,\\,$(1)) mkdir $(subst /,\\,$(1))
-    RM = rmdir /s /q $(subst /,\\,$(1))
-    DEL = del /q $(subst /,\\,$(1))
+    MKDIR = powershell -Command "if (!(Test-Path $(1))) { New-Item -ItemType Directory -Force -Path $(1) | Out-Null }"
+    RM = powershell -Command "if (Test-Path $(1)) { Remove-Item -Recurse -Force $(1) }"
+    DEL = powershell -Command "if (Test-Path $(1)) { Remove-Item -Force $(1) }"
     RUN = $(TEST)$(EXE)
 else
     EXE =
@@ -38,7 +38,7 @@ $(OBJ_DIR)/graph.o: $(SRC_DIR)/graph.c include/graph.h | $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(LIB): $(OBJS) | $(LIB_DIR)
-	$(DEL) $(LIB)
+	$(call DEL,$(LIB))
 	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 $(TEST): $(LIB) $(TEST_DIR)/test.c
@@ -50,6 +50,6 @@ run: $(TEST)
 clean:
 	-$(call RM,$(OBJ_DIR))
 	-$(call RM,$(LIB_DIR))
-	-$(DEL) $(TEST)$(EXE)
+	-$(call DEL,$(TEST)$(EXE))
 
 .PHONY: all clean run

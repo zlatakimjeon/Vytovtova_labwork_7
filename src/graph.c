@@ -79,7 +79,7 @@ void graph_free(Graph *g) {
     free(g);
 }
 
-static int find_farthest(Graph *g, int start, int *dist) {
+static int find_farthest(Graph *g, int start, int *dist, int *visited) {
     for (int i = 0; i < g->n; ++i) dist[i] = -1;
     Queue *q = queue_create(g->n);
     dist[start] = 0;
@@ -87,6 +87,7 @@ static int find_farthest(Graph *g, int start, int *dist) {
     int farthest = start;
     while (!queue_empty(q)) {
         int v = queue_pop(q);
+        visited[v] = 1;
         for (int i = 0; i < g->adj[v].size; ++i) {
             int u = g->adj[v].data[i];
             if (dist[u] == -1) {
@@ -103,12 +104,20 @@ static int find_farthest(Graph *g, int start, int *dist) {
 int graph_diameter(Graph *g) {
     if (!g || g->n == 0) return 0;
     int *dist = (int*)malloc(g->n * sizeof(int));
-    if (!dist) exit(1);
-    int v1 = find_farthest(g, 0, dist);
-    int v2 = find_farthest(g, v1, dist);
-    int diameter = dist[v2];
+    int *visited = (int*)calloc(g->n, sizeof(int));
+    if (!dist || !visited) exit(1);
+    int max_diameter = 0;
+    for (int i = 0; i < g->n; ++i) {
+        if (!visited[i]) {
+            int v1 = find_farthest(g, i, dist, visited);
+            int v2 = find_farthest(g, v1, dist, visited);
+            if (dist[v2] > max_diameter) max_diameter = dist[v2];
+        }
+    }
+
     free(dist);
-    return diameter;
+    free(visited);
+    return max_diameter;
 }
 
 GraphIterator graph_iter(Graph *g) {
